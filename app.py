@@ -1,7 +1,5 @@
 import streamlit as st
 from process import load_and_chunk, embed_and_store
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.chains import ConversationalRetrievalChain
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
