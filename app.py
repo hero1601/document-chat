@@ -9,59 +9,64 @@ st.set_page_config(page_title="Chat with Document")
 st.title("📄 Chat with your Document")
 load_dotenv()
 
-# Initialize session state for chat history
+# To handle deadlocks. Can later on turn on if high-throughput needed
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = None
 
-if "file_processed" not in st.session_state:
-    st.session_state.file_processed = False
+if "uploaded_file_name" not in st.session_state:
+    st.session_state.uploaded_file_name = None
+
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
-if uploaded_file and st.session_state.file_processed == False:
-    st.session_state.processed_file = uploaded_file.name
-    os.makedirs("sample_docs", exist_ok=True)
-    file_path = f"sample_docs/{uploaded_file.name}"
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.read())
+if uploaded_file:
 
-    with st.spinner("Embedding..."):
-        chunks = load_and_chunk(file_path)
-        db = embed_and_store(chunks)
+    if st.session_state.uploaded_file_name != uploaded_file.name:
+        st.session_state.uploaded_file_name = uploaded_file.name
+        os.makedirs("sample_docs", exist_ok=True)
+        file_path = f"sample_docs/{uploaded_file.name}"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.read())
 
-    llm = ChatGroq(
-        temperature=0.2,
-        model="llama3-70b-8192"
-    )
+        with st.spinner("Running..."):
+            chunks = load_and_chunk(file_path)
+            db = embed_and_store(chunks)
 
-    retriever = db.as_retriever()
-    qa_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=retriever,
-        return_source_documents=True
-    )
-    st.session_state.qa_chain = qa_chain
-    st.session_state.file_processed = True
+        llm = ChatGroq(
+            temperature=0.2,
+            model="llama3-70b-8192"
+        )
 
-if st.session_state.qa_chain:
-    query = st.text_input("Ask a question about the document:")
-    if query:
-        result = st.session_state.qa_chain.invoke({
-            "question": query,
-            "chat_history": st.session_state.chat_history
-        })
+        retriever = db.as_retriever()
+        qa_chain = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=retriever,
+            return_source_documents=True
+        )
         
-        # Update and display chat history
-        st.session_state.chat_history.append((query, result['answer']))
+        st.session_state.qa_chain = qa_chain
 
-        st.markdown("### Answer")
-        st.write(result['answer'])
+    if st.session_state.qa_chain:
+        query = st.text_input("Ask a question about the document:")
+        if query:
+            result = st.session_state.qa_chain.invoke({
+                "question": query,
+                "chat_history": st.session_state.chat_history
+            })
+            
+            # Update and display chat history
+            st.session_state.chat_history.append((query, result['answer']))
 
-        # Optional: Display chat history for reference
-        with st.expander("🕒 Chat History"):
-            for i, (q, a) in enumerate(st.session_state.chat_history):
-                st.markdown(f"**Q{i+1}:** {q}")
-                st.markdown(f"**A{i+1}:** {a}")
+            st.markdown("### Answer")
+            st.write(result['answer'])
+
+            # Optional: Display chat history for reference
+            with st.expander("🕒 Chat History"):
+                for i, (q, a) in enumerate(st.session_state.chat_history):
+                    st.markdown(f"**Q{i+1}:** {q}")
+                    st.markdown(f"**A{i+1}:** {a}")
