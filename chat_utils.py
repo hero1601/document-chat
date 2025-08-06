@@ -51,8 +51,3 @@ def handle_query(chat_session: dict, query: str):
     st.markdown("### Answer")
     st.write(result['answer'])
 
-    with st.expander("🕒 Chat History"):
-        for i, (q, a) in enumerate(chat_session["history"]):
-            st.markdown(f"**Q{i+1}:** {q}")
-            st.markdown(f"**A{i+1}:** {a}")
-
