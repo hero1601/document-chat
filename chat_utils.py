@@ -3,6 +3,35 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_groq import ChatGroq
 from process import load_and_chunk, embed_and_store
 import streamlit as st
+import json
+
+def get_chat_filename(username: str) -> str:
+    safe_username = username.replace(" ", "_")
+    return f"chat_sessions_{safe_username}.json"
+
+def save_chats(username: str, chat_sessions: dict):
+    filename = get_chat_filename(username)
+    with open(filename, "w") as f:
+        json.dump(chat_sessions, f)
+
+def load_chats(username: str) -> dict:
+    filename = get_chat_filename(username)
+    if os.path.exists(filename):
+        with open(filename) as f:
+            return json.load(f)
+        
+    return {
+        "chat_tabs": ["Chat 1"],
+        "current_chat": "Chat 1",
+        "previous_chat": "Chat -1",
+        "chat_sessions": {
+            "Chat 1": {
+                "uploaded_file": None,
+                "qa_chain": None,
+                "history": [],
+            }
+        },
+    }
 
 
 def process_pdf(uploaded_file):
@@ -46,7 +75,8 @@ def handle_query(chat_session: dict, query: str):
         st.error(f"Currently the server is down. Can you try little later")
         return
     
-    chat_session["history"].append((query, result['answer']))
+    question_with_file = f"{query} : [File: {chat_session.get("uploaded_file").name}]" # type: ignore
+    chat_session["history"].append((question_with_file, result['answer']))
 
     st.markdown("### Answer")
     st.write(result['answer'])

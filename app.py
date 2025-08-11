@@ -1,70 +1,40 @@
 import streamlit as st
-import os
-from dotenv import load_dotenv
-from chat_utils import process_pdf, handle_query
+from button import all_button_background
+from login import login_top_right
+from chat_utils import save_chats, load_chats
+from chat_manager import init_chat_state, chat_ui
+import copy
 
 st.set_page_config(page_title="Chat with Document")
 st.title("📄 Chat with your Document")
-load_dotenv()
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+all_button_background()
 
-# --- Initialize chat state map ---
-if "chat_tabs" not in st.session_state:
-    st.session_state.chat_tabs = ["Chat 1"]
-if "current_chat" not in st.session_state:
-    st.session_state.current_chat = "Chat 1"
-if "previous_chat" not in st.session_state:
-    st.session_state.previous_chat = "Chat -1"
-if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = {
-        "Chat 1": {
-            "uploaded_file": None,
-            "qa_chain": None,
-            "history": [],
-        }
+authenticator, name, authentication_status, username = login_top_right()
+
+if authentication_status:
+    user_data = load_chats(username) # type: ignore
+    init_chat_state(user_data)
+else:
+    init_chat_state()
+
+chat_ui()
+
+if authentication_status:
+
+    chat_sessions_copy = copy.copy(st.session_state.chat_sessions)
+    
+    for chat_name, chat_data in chat_sessions_copy.items():
+        if chat_data.get("uploaded_file") is not None:
+            chat_data["uploaded_file"] = getattr(chat_data["uploaded_file"], "name", None)
+        
+        # Remove qa_chain before saving
+        chat_data["qa_chain"] = None
+
+    user_data_to_save = {
+        "chat_tabs": st.session_state.chat_tabs,
+        "current_chat": st.session_state.current_chat,
+        "previous_chat": st.session_state.previous_chat,
+        "chat_sessions": chat_sessions_copy,
     }
 
-
-if st.sidebar.button("➕ New Chat"):
-    new_chat = f"Chat {len(st.session_state.chat_tabs) + 1}"
-    st.session_state.chat_tabs.append(new_chat)
-    st.session_state.chat_sessions[new_chat] = {
-        "uploaded_file": None,
-        "qa_chain": None,
-        "history": [],
-    }
-    st.session_state.current_chat = new_chat
-
-chat_selection = st.sidebar.radio(
-    "📁 Chats",
-    st.session_state.chat_tabs,
-    key="current_chat"
-)
-
-chat = st.session_state.chat_sessions[st.session_state.current_chat]
-st.subheader(f"🗂️ {st.session_state.current_chat}")
-
-uploaded_file = st.file_uploader("Upload a PDF", type="pdf", key=f"upload_{st.session_state.current_chat}")
-
-if uploaded_file is None and chat["uploaded_file"] is not None and st.session_state.previous_chat != st.session_state.current_chat:
-    uploaded_file = chat["uploaded_file"]
-    st.info(f"Using previously uploaded file: {uploaded_file.name}")
-
-st.session_state.previous_chat = st.session_state.current_chat
-
-if uploaded_file != None:
-    if chat["uploaded_file"] != uploaded_file:
-        chat["uploaded_file"] = uploaded_file
-
-        with st.spinner("Processing document..."):
-            chat["qa_chain"] = process_pdf(uploaded_file)
-
-    # --- Handle QA interaction ---
-    if chat["qa_chain"] != None:
-        query = st.text_input("Ask a question about the document:", key=f"query_{st.session_state.current_chat}")
-        if query:
-            handle_query(chat, query)
-        with st.expander("🕒 Chat History"):
-            for i, (q, a) in enumerate(chat["history"]):
-                st.markdown(f"**Q{i+1}:** {q}")
-                st.markdown(f"**A{i+1}:** {a}")
+    save_chats(username, user_data_to_save)  # type: ignore

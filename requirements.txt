@@ -7,3 +7,4 @@ tiktoken
 sentence-transformers
 langchain-huggingface
 faiss-cpu
+Authlib
