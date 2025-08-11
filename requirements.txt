@@ -1,7 +1,7 @@
 langchain
 langchain_groq
 langchain-community
-streamlit
+streamlit>=1.10.0
 pypdf
 tiktoken
 sentence-transformers
