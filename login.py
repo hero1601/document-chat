@@ -9,7 +9,7 @@ from button import all_button_background
 def get_oauth_client():
     CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-    REDIRECT_URI = os.getenv("REDIRECT_URI", "http://localhost:8501")
+    REDIRECT_URI = os.getenv("REDIRECT_URI")
 
     return OAuth2Session(
         CLIENT_ID,
@@ -40,12 +40,12 @@ def handle_oauth_callback(oauth, token_url, userinfo_url):
     params = st.query_params
     if "code" in params:
         query_string = urlencode(params, doseq=True)
-        full_url = f"{os.getenv('REDIRECT_URI', 'http://localhost:8501')}?{query_string}"
+        full_url = f"{os.getenv('REDIRECT_URI')}?{query_string}"
 
         token = oauth.fetch_token(
             token_url,
             authorization_response=full_url,
-            redirect_uri=os.getenv("REDIRECT_URI", "http://localhost:8501")
+            redirect_uri=os.getenv("REDIRECT_URI")
         )
         user_info = oauth.get(userinfo_url).json()
         st.session_state["user_info"] = user_info
