@@ -27,8 +27,14 @@ def redirect_to(url):
 
 # --- UI helpers ---
 def render_login_button(auth_url):
-    if st.button("Login with Google"):
-        st.session_state["redirect_to_google"] = auth_url
+    
+    # Checkbox confirmation
+    confirm = st.checkbox("✅ I am already logged into my Google account")
+
+    # Disable button until confirmed
+    if st.button("Login with Google", disabled=not confirm):
+        if confirm:
+            st.session_state["redirect_to_google"] = auth_url
 
 
 def render_logout_button(name):
