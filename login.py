@@ -16,7 +16,6 @@ def get_oauth_client():
         redirect_uri=REDIRECT_URI
     )
 
-
 # --- Redirect helper ---
 def redirect_to(url):
     st.markdown(
@@ -24,26 +23,17 @@ def redirect_to(url):
         unsafe_allow_html=True
     )
 
-
 # --- UI helpers ---
 def render_login_button(auth_url):
-    
-    # Checkbox confirmation
-    confirm = st.checkbox("✅ I am already logged into my Google account")
-
-    # Disable button until confirmed
-    if st.button("Login with Google", disabled=not confirm):
-        if confirm:
-            st.session_state["redirect_to_google"] = auth_url
-
+    # Inject CSS to style the button
+    if st.button("Login with Google"):
+        st.session_state["redirect_to_google"] = auth_url
 
 def render_logout_button(name):
     st.markdown(f"Hi, {name} ")
     if st.button("Logout"):
         st.session_state.pop("user_info", None)
 
-
-# --- OAuth callback ---
 def handle_oauth_callback(oauth, token_url, userinfo_url):
     params = st.query_params
     if "code" in params:
@@ -53,15 +43,12 @@ def handle_oauth_callback(oauth, token_url, userinfo_url):
         token = oauth.fetch_token(
             token_url,
             authorization_response=full_url,
-            redirect_uri=os.getenv("REDIRECT_URI"),
-            state=st.session_state.get("state")  # verify state
+            redirect_uri=os.getenv("REDIRECT_URI")
         )
-
         user_info = oauth.get(userinfo_url).json()
         st.session_state["user_info"] = user_info
         st.query_params.clear()
         st.rerun()
-
 
 # --- Main login UI ---
 def login_top_right():
@@ -75,18 +62,12 @@ def login_top_right():
     username = None
     name = None
 
-    handle_oauth_callback(oauth, TOKEN_URL, USERINFO_URL)
-
     if "user_info" not in st.session_state:
-        auth_url, state = oauth.create_authorization_url(
-            AUTH_URL,
-            access_type="offline",
-            prompt="select_account"
-        )
-        st.session_state["state"] = state
+        auth_url, _ = oauth.create_authorization_url(AUTH_URL)
 
         render_login_button(auth_url)
 
+        # If user clicked button → redirect browser to Google OAuth
         if "redirect_to_google" in st.session_state:
             url = st.session_state.pop("redirect_to_google")
             redirect_to(url)
@@ -97,5 +78,7 @@ def login_top_right():
         username = user_info.get("email")
         authentication_status = True
         render_logout_button(name)
+
+    handle_oauth_callback(oauth, TOKEN_URL, USERINFO_URL)
 
     return None, name, authentication_status, username
