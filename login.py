@@ -26,6 +26,16 @@ def redirect_to(url):
 # --- UI helpers ---
 def render_login_button(auth_url):
     # Inject CSS to style the button
+
+    st.warning("""
+    ⚠️ **Safari users:** Login may fail to recognize your account due to privacy restrictions.  
+    For best results, use Chrome or Firefox.
+
+    Please sign in at [Google.com](https://google.com) first, then retry here.
+
+    You can use the app without logging in, but your data won’t be saved.
+    """)
+
     if st.button("Login with Google"):
         st.session_state["redirect_to_google"] = auth_url
 
