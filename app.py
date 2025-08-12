@@ -6,14 +6,14 @@ from chat_manager import init_chat_state, chat_ui
 import copy
 
 
-# st.warning("""
-# ⚠️ **Safari users:** Login may fail to recognize your account due to privacy restrictions.  
-# For best results, use Chrome or Firefox.
+st.warning("""
+⚠️ **Safari users:** Login may fail to recognize your account due to privacy restrictions.  
+For best results, use Chrome or Firefox.
 
-# Please sign in at [Google.com](https://google.com) first, then retry here.
+Please sign in at [Google.com](https://google.com) first, then retry here.
 
-# You can use the app without logging in, but your data won’t be saved.
-# """)
+You can use the app without logging in, but your data won’t be saved.
+""")
 st.set_page_config(page_title="Chat with Document")
 st.title("📄 Chat with your Document")
 all_button_background()
