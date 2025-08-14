@@ -24,9 +24,6 @@ if authentication_status:
     chat_sessions_copy = copy.copy(st.session_state.chat_sessions)
     
     for chat_name, chat_data in chat_sessions_copy.items():
-        if chat_data.get("uploaded_file") is not None:
-            chat_data["uploaded_file"] = getattr(chat_data["uploaded_file"], "name", None)
-        
         # Remove qa_chain before saving
         chat_data["qa_chain"] = None
 

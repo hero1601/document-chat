@@ -37,9 +37,7 @@ def load_chats(username: str) -> dict:
 def process_pdf(uploaded_file):
 
     os.makedirs("sample_docs", exist_ok=True)
-    file_path = f"sample_docs/{uploaded_file.name}"
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.read())
+    file_path = f"sample_docs/{uploaded_file}"
 
     chunks = load_and_chunk(file_path)
     db = embed_and_store(chunks)
@@ -75,7 +73,7 @@ def handle_query(chat_session: dict, query: str):
         st.error(f"Currently the server is down. Can you try little later")
         return
     
-    question_with_file = f"{query} : [File: {chat_session.get("uploaded_file").name}]" # type: ignore
+    question_with_file = f"{query} : [File: {chat_session.get("uploaded_file")}]" # type: ignore
     chat_session["history"].append((question_with_file, result['answer']))
 
     st.markdown("### Answer")

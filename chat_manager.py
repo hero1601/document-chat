@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import streamlit as st
 from chat_utils import process_pdf, handle_query
+import os
 
 load_dotenv()
 
@@ -59,7 +60,13 @@ def chat_ui():
 
     uploaded_file = st.file_uploader("Upload a PDF", type="pdf", key=f"upload_{st.session_state.current_chat}")
 
-    if uploaded_file is None and chat["uploaded_file"] is not None and st.session_state.previous_chat != st.session_state.current_chat:
+    if uploaded_file is not None:
+        os.makedirs("sample_docs", exist_ok=True)
+        file_path = f"sample_docs/{uploaded_file.name}"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.read())
+
+    if uploaded_file is None and chat["uploaded_file"] is not None:
         uploaded_file = chat["uploaded_file"]
         st.info(f"Using previously uploaded file: {uploaded_file}")
 
@@ -67,12 +74,11 @@ def chat_ui():
 
     if uploaded_file is not None:
         if chat["uploaded_file"] != uploaded_file:
-            chat["uploaded_file"] = uploaded_file
-            with st.spinner("Processing document..."):
-                chat["qa_chain"] = process_pdf(uploaded_file)
+            chat["uploaded_file"] = uploaded_file.name
         
         if chat["qa_chain"] is None:
-            chat["qa_chain"] = process_pdf(uploaded_file)
+            with st.spinner("Processing document..."):
+                chat["qa_chain"] = process_pdf(chat["uploaded_file"])
 
         if chat["qa_chain"] is not None:
             query = st.text_input("Ask a question about the document:", key=f"query_{st.session_state.current_chat}")
