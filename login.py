@@ -15,13 +15,7 @@ def get_oauth_client():
         scope="openid email profile",
         redirect_uri=REDIRECT_URI
     )
-
-# --- Redirect helper ---
-def redirect_to(url):
-    st.markdown(
-        f'<meta http-equiv="refresh" content="0; url={url}">',
-        unsafe_allow_html=True
-    )
+    
 
 # --- UI helpers ---
 def render_login_button(auth_url):
@@ -36,8 +30,21 @@ def render_login_button(auth_url):
     You can use the app without logging in, but your data won’t be saved.
     """)
 
-    if st.button("Login with Google"):
-        st.session_state["redirect_to_google"] = auth_url
+    login_button_html = f'''
+        <a href="{auth_url}" target="_blank" style="
+            display: inline-block;
+            padding: 0.5em 1em;
+            background-color: #4285F4;
+            color: white;
+            font-weight: bold;
+            border-radius: 4px;
+            text-decoration: none;
+        ">
+            Login with Google
+        </a>
+    '''
+    st.markdown(login_button_html, unsafe_allow_html=True)
+
 
 def render_logout_button(name):
     st.markdown(f"Hi, {name} ")
@@ -68,19 +75,15 @@ def login_top_right():
     TOKEN_URL = "https://oauth2.googleapis.com/token"
     USERINFO_URL = "https://www.googleapis.com/oauth2/v1/userinfo"
 
+    handle_oauth_callback(oauth, TOKEN_URL, USERINFO_URL)
+
     authentication_status = False
     username = None
     name = None
 
     if "user_info" not in st.session_state:
         auth_url, _ = oauth.create_authorization_url(AUTH_URL)
-
         render_login_button(auth_url)
-
-        # If user clicked button → redirect browser to Google OAuth
-        if "redirect_to_google" in st.session_state:
-            url = st.session_state.pop("redirect_to_google")
-            redirect_to(url)
 
     else:
         user_info = st.session_state["user_info"]
@@ -88,7 +91,5 @@ def login_top_right():
         username = user_info.get("email")
         authentication_status = True
         render_logout_button(name)
-
-    handle_oauth_callback(oauth, TOKEN_URL, USERINFO_URL)
 
     return None, name, authentication_status, username
