@@ -15,41 +15,29 @@ def get_oauth_client():
         scope="openid email profile",
         redirect_uri=REDIRECT_URI
     )
-    
 
 # --- UI helpers ---
 def render_login_button(auth_url):
-    # Inject CSS to style the button
-
-    st.warning("""
-    ⚠️ **Safari users:** Login may fail to recognize your account due to privacy restrictions.  
-    For best results, use Chrome or Firefox.
-
-    Please sign in at [Google.com](https://google.com) first, then retry here.
-
-    You can use the app without logging in, but your data won’t be saved.
-    """)
-
-    login_button_html = f'''
-        <a href="{auth_url}" target="_blank" style="
-            display: inline-block;
-            padding: 0.5em 1em;
-            background-color: #4285F4;
-            color: white;
-            font-weight: bold;
-            border-radius: 4px;
-            text-decoration: none;
-        ">
-            Login with Google
-        </a>
+    login_link = f'''
+        <a href="{auth_url}" target="_self" style="
+            background:#4285F4;
+            color:white;
+            padding:10px 20px;
+            border-radius:4px;
+            text-decoration:none;
+            font-weight:bold;
+            display:inline-block;
+        ">Login with Google</a>
     '''
-    st.markdown(login_button_html, unsafe_allow_html=True)
+    st.markdown(login_link, unsafe_allow_html=True)
+        
 
 
 def render_logout_button(name):
     st.markdown(f"Hi, {name} ")
     if st.button("Logout"):
         st.session_state.pop("user_info", None)
+
 
 def handle_oauth_callback(oauth, token_url, userinfo_url):
     params = st.query_params
@@ -84,7 +72,7 @@ def login_top_right():
     if "user_info" not in st.session_state:
         auth_url, _ = oauth.create_authorization_url(AUTH_URL)
         render_login_button(auth_url)
-
+        
     else:
         user_info = st.session_state["user_info"]
         name = user_info.get("name")
