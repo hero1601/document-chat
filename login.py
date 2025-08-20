@@ -19,7 +19,7 @@ def get_oauth_client():
 # --- UI helpers ---
 def render_login_button(auth_url):
     login_link = f'''
-        <a href="{auth_url}" target="_self" style="
+        <a href="{auth_url}" style="
             background:#4285F4;
             color:white;
             padding:10px 20px;
